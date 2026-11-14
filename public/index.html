@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pixel Agents</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>👾 Pixel Agents</h1>
+    <div id="summary">
+      <div class="stat"><span class="label">Agentes</span><span id="s-agents">0</span></div>
+      <div class="stat"><span class="label">Trabalhando</span><span id="s-working">0</span></div>
+      <div class="stat"><span class="label">Tokens totais</span><span id="s-total">0</span></div>
+      <div class="stat"><span class="label">Output</span><span id="s-output">0</span></div>
+    </div>
+    <span id="conn" class="conn off">offline</span>
+  </header>
+  <main>
+    <section id="office-wrap">
+      <canvas id="office"></canvas>
+      <div id="overlay"></div>
+      <p id="empty" hidden>Nenhum terminal do Claude Code ativo. Abra um <code>claude</code> em algum projeto e ele aparece aqui.</p>
+    </section>
+    <aside id="panel"></aside>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

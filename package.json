@@ -1,0 +1,14 @@
+{
+  "name": "pixel-agents",
+  "version": "0.1.0",
+  "description": "Escritório pixel art onde cada terminal do Claude Code vira um personagem que mostra o que está fazendo e quantos tokens está gastando.",
+  "main": "server.js",
+  "bin": { "pixel-agents": "server.js" },
+  "scripts": {
+    "start": "node server.js",
+    "demo": "node server.js --demo",
+    "test": "node --test test/*.test.js"
+  },
+  "engines": { "node": ">=18" },
+  "license": "MIT"
+}

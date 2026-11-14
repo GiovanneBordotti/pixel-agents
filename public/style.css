@@ -1,0 +1,64 @@
+:root {
+  --bg: #14121f;
+  --panel: #1f1b33;
+  --line: #352e55;
+  --text: #ece8ff;
+  --muted: #9c94c4;
+  --typing: #4ade80;
+  --reading: #60a5fa;
+  --thinking: #c084fc;
+  --delegating: #f472b6;
+  --waiting: #facc15;
+  --idle: #94a3b8;
+  --sleeping: #475569;
+  --font: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font); font-size: 13px; }
+header { display: flex; align-items: center; gap: 24px; padding: 12px 20px; border-bottom: 2px solid var(--line); flex-wrap: wrap; }
+h1 { font-size: 18px; margin: 0; letter-spacing: 1px; }
+#summary { display: flex; gap: 20px; flex: 1; flex-wrap: wrap; }
+.stat { display: flex; flex-direction: column; }
+.stat .label { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 1px; }
+.stat span:last-child { font-size: 16px; font-weight: bold; }
+.conn { font-size: 11px; padding: 3px 8px; border: 2px solid; }
+.conn.on { color: var(--typing); }
+.conn.off { color: #f87171; }
+
+main { display: grid; grid-template-columns: 1fr 380px; gap: 16px; padding: 16px; align-items: start; }
+@media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+
+#office-wrap { position: relative; background: #0d0b16; border: 2px solid var(--line); min-height: 200px; overflow: hidden; }
+#office { display: block; margin: 0 auto; image-rendering: pixelated; image-rendering: crisp-edges; }
+#overlay { position: absolute; inset: 0; pointer-events: none; }
+#empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; padding: 24px; color: var(--muted); margin: 0; }
+#empty[hidden] { display: none; }
+
+.bubble {
+  position: absolute; transform: translate(-50%, -100%); background: #fff; color: #1a1625;
+  padding: 4px 7px; font-size: 11px; line-height: 1.25; max-width: min(var(--bubble-max, 190px), 220px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  border: 2px solid #1a1625; box-shadow: 3px 3px 0 rgba(0,0,0,.35); transition: left .1s linear, top .1s linear;
+}
+.bubble::after { content: ''; position: absolute; left: 50%; bottom: -8px; margin-left: -4px; border: 4px solid transparent; border-top-color: #1a1625; }
+.bubble.waiting { background: var(--waiting); animation: bounce .6s infinite alternate; }
+.bubble.sleeping { background: #cbd5e1; color: #334155; }
+@keyframes bounce { to { transform: translate(-50%, calc(-100% - 4px)); } }
+.nameplate { position: absolute; transform: translateX(-50%); font-size: 10px; color: var(--muted); background: rgba(13,11,22,.8); padding: 1px 5px; white-space: nowrap; }
+
+#panel { display: flex; flex-direction: column; gap: 10px; }
+.card { background: var(--panel); border: 2px solid var(--line); padding: 10px 12px; border-left-width: 6px; }
+.card .top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.card .name { font-weight: bold; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chip { font-size: 10px; padding: 2px 6px; color: #14121f; font-weight: bold; text-transform: uppercase; white-space: nowrap; }
+.card .meta { color: var(--muted); font-size: 11px; margin-top: 2px; }
+.card .activity { margin: 8px 0 4px; }
+.card .prompt { color: var(--muted); font-size: 11px; font-style: italic; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tokens { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-top: 8px; }
+.tokens div { background: #171427; padding: 4px; text-align: center; }
+.tokens .k { display: block; color: var(--muted); font-size: 9px; text-transform: uppercase; }
+.tokens .v { font-weight: bold; }
+.totalrow { display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px; }
+.bar { height: 8px; background: #171427; margin-top: 4px; display: flex; }
+.bar span { display: block; height: 100%; }
+.legend { color: var(--muted); font-size: 10px; display: flex; gap: 10px; margin-top: 4px; }
+.legend i { display: inline-block; width: 8px; height: 8px; margin-right: 3px; vertical-align: middle; }
