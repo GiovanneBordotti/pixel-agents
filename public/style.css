@@ -10,7 +10,7 @@
   --delegating: #f472b6;
   --waiting: #facc15;
   --idle: #94a3b8;
-  --sleeping: #475569;
+  --away: #64748b;
   --font: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
 }
 * { box-sizing: border-box; }
@@ -29,9 +29,9 @@ main { display: grid; grid-template-columns: 1fr 380px; gap: 16px; padding: 16px
 @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
 
 #office-wrap { position: relative; background: #0d0b16; border: 2px solid var(--line); min-height: 200px; overflow: hidden; }
-#office { display: block; margin: 0 auto; image-rendering: pixelated; image-rendering: crisp-edges; }
+#office { display: block; width: 100%; height: auto; image-rendering: pixelated; image-rendering: crisp-edges; }
 #overlay { position: absolute; inset: 0; pointer-events: none; }
-#empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; padding: 24px; color: var(--muted); margin: 0; }
+#empty { position: absolute; left: 50%; top: 42%; transform: translateX(-50%); max-width: 80%; text-align: center; padding: 8px 12px; color: var(--text); background: rgba(13,11,22,.85); border: 2px solid var(--line); margin: 0; z-index: 1000; }
 #empty[hidden] { display: none; }
 
 .bubble {
@@ -41,9 +41,16 @@ main { display: grid; grid-template-columns: 1fr 380px; gap: 16px; padding: 16px
 }
 .bubble::after { content: ''; position: absolute; left: 50%; bottom: -8px; margin-left: -4px; border: 4px solid transparent; border-top-color: #1a1625; }
 .bubble.waiting { background: var(--waiting); animation: bounce .6s infinite alternate; }
+.bubble[hidden] { display: none; }
 .bubble.sleeping { background: #cbd5e1; color: #334155; }
+.bubble.talk { background: #fdf4ff; }
+.bubble.done { background: #bbf7d0; }
+.bubble.work { background: #fed7aa; }
+.nametag { position: absolute; transform: translateX(-50%); font-size: 9px; color: #f8fafc; background: rgba(13,11,22,.72); padding: 0 4px; white-space: nowrap; line-height: 13px; }
+.nametag i { display: inline-block; width: 6px; height: 6px; margin-right: 3px; vertical-align: middle; }
+.card.dim { opacity: .75; }
 @keyframes bounce { to { transform: translate(-50%, calc(-100% - 4px)); } }
-.nameplate { position: absolute; transform: translateX(-50%); font-size: 10px; color: var(--muted); background: rgba(13,11,22,.8); padding: 1px 5px; white-space: nowrap; }
+.nameplate-unused { position: absolute; transform: translateX(-50%); font-size: 10px; color: var(--muted); background: rgba(13,11,22,.8); padding: 1px 5px; white-space: nowrap; }
 
 #panel { display: flex; flex-direction: column; gap: 10px; }
 .card { background: var(--panel); border: 2px solid var(--line); padding: 10px 12px; border-left-width: 6px; }

@@ -66,3 +66,9 @@ test('watcher lê sessões e subagentes incrementalmente', () => {
   assert.strictEqual(a.subagents, 1);
   assert.strictEqual(a.total, 12);
 });
+
+test('sessão parada há mais de 30 min fica "de folga", mesmo com tool pendente', () => {
+  const s = new Session('abc', 'x');
+  s.ingest({ type: 'assistant', timestamp: at(0), message: { id: 'm1', content: [{ type: 'tool_use', id: 't1', name: 'Bash', input: { command: 'ls' } }] } });
+  assert.strictEqual(s.status(T0 + 31 * 60_000).state, 'away');
+});

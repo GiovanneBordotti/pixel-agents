@@ -1,6 +1,15 @@
 # 👾 Pixel Agents
 
-Um escritório em pixel art onde **cada terminal do Claude Code vira um personagem**. Cada um mostra num balão o que está fazendo agora (lendo um arquivo, rodando um comando, delegando para um subagente, esperando você…) e o painel lateral mostra **quantos tokens cada um está gastando**.
+Uma cidadezinha em pixel art onde **cada terminal do Claude Code vira um morador**. Quando está trabalhando, ele fica na mesa do escritório (Claude HQ) e mostra num balão o que está fazendo (lendo um arquivo, rodando um comando, delegando para um subagente, esperando você…). Quando termina ou o terminal é fechado, ele sai para a cidade: conversa com os outros, toma café, senta no banco da praça ou dá uma pausa no fumódromo. O painel lateral mostra **quantos tokens cada um está gastando**.
+
+## A cidade
+
+- **Claude HQ**: o escritório. Cada agente tem a sua mesa.
+- **Fumódromo**, **Café** e **praça** com fonte e bancos: para onde os agentes vão quando não estão trabalhando.
+- **NPCs** (Dona Neide, Seu Zé, Bia e Carlão do NOC) moram na cidade e conversam, fumam e tomam café junto com os agentes. Desligue com `?npcs=0` na URL.
+- **Personagens não somem** quando você fecha o Claude: ficam "de folga" pela cidade por até 7 dias (`--hours`).
+- **Dia e noite** seguem o relógio do seu computador. Force com `?day` ou `?night`.
+- Quando o Claude volta a trabalhar, o personagem larga o que está fazendo e corre para a mesa.
 
 ![screenshot](docs/screenshot.png)
 
@@ -15,8 +24,8 @@ O Claude Code grava cada sessão em `~/.claude/projects/<projeto>/<sessão>.json
 | `delegando`   | Task/Agent (subagentes)                                       | robozinhos rosas ao lado da mesa |
 | `pensando`    | recebeu um prompt ou o resultado de uma tool                  | balão "Pensando..."              |
 | `aguardando`  | pergunta para você, ou tool rápida parada há mais de 10s (provavelmente pedindo permissão) | balão amarelo pulando |
-| `livre`       | terminou a resposta e está esperando você                     | levanta e anda pelo escritório   |
-| `dormindo`    | sem atividade há 30 min                                       | zZz                              |
+| `livre`       | terminou a resposta e está esperando você                     | sai para a cidade                |
+| `de folga`    | sem atividade há 30 min (Claude fechado)                      | passeia, conversa, cochila no banco |
 
 ### Tokens
 
@@ -38,7 +47,7 @@ git clone https://github.com/GiovanneBordotti/pixel-agents.git
 cd pixel-agents
 npm start          # lê ~/.claude/projects
 # ou
-npm run demo       # 4 agentes falsos, para ver funcionando
+npm run demo       # agentes falsos, para ver funcionando
 ```
 
 Abra <http://localhost:4567>.
@@ -49,7 +58,8 @@ Abra <http://localhost:4567>.
 |-------------------|-----------------------|-----------------|
 | `--port 4567`     | `PORT`                | `4567`          |
 | `--host 0.0.0.0`  | `HOST`                | `127.0.0.1`     |
-| `--hours 12`      | `PIXEL_AGENTS_HOURS`  | `12` (sessões com atividade nas últimas N horas) |
+| `--hours 168`     | `PIXEL_AGENTS_HOURS`  | `168` (sessões com atividade nos últimos 7 dias) |
+| `--max 12`        | `PIXEL_AGENTS_MAX`    | `12` (máximo de personagens, os mais recentes)   |
 | `--claude-dir`    | `CLAUDE_CONFIG_DIR`   | `~/.claude`     |
 | `--demo`          |                       | desligado       |
 
@@ -62,7 +72,7 @@ server.js          servidor HTTP + SSE
 lib/session.js     estado de uma sessão (atividade + tokens)
 lib/watcher.js     leitura incremental dos .jsonl
 lib/demo.js        gerador de sessões falsas
-public/            front-end (canvas pixel art + painel)
+public/            front-end (cidade em canvas + painel)
 test/              testes (node --test)
 ```
 
