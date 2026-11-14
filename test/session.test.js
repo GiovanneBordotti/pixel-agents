@@ -72,3 +72,29 @@ test('sessão parada há mais de 30 min fica "de folga", mesmo com tool pendente
   s.ingest({ type: 'assistant', timestamp: at(0), message: { id: 'm1', content: [{ type: 'tool_use', id: 't1', name: 'Bash', input: { command: 'ls' } }] } });
   assert.strictEqual(s.status(T0 + 31 * 60_000).state, 'away');
 });
+
+test('mostra a tarefa em andamento (TodoWrite) e a narração', () => {
+  const s = new Session('abc', 'x');
+  s.ingest({ type: 'assistant', timestamp: at(0), message: { id: 'm1', content: [
+    { type: 'text', text: 'Vou rodar os testes para ver se o bug sumiu. Depois eu ajusto.' },
+    { type: 'tool_use', id: 't0', name: 'TodoWrite', input: { todos: [
+      { content: 'Corrigir login', activeForm: 'Corrigindo o login', status: 'in_progress' },
+      { content: 'Escrever testes', status: 'pending' }] } },
+  ] } });
+  s.ingest({ type: 'user', timestamp: at(1), message: { content: [{ type: 'tool_result', tool_use_id: 't0' }] } });
+  s.ingest({ type: 'assistant', timestamp: at(2), message: { id: 'm2', content: [{ type: 'tool_use', id: 't1', name: 'Bash', input: { command: 'npm test' } }] } });
+  const st = s.status(T0 + 3000);
+  assert.strictEqual(st.goal, 'Corrigindo o login');
+  assert.strictEqual(st.narration, 'Vou rodar os testes para ver se o bug sumiu.');
+});
+
+test('mostra a tarefa em andamento (TaskCreate + TaskUpdate)', () => {
+  const s = new Session('abc', 'x');
+  s.ingest({ type: 'assistant', timestamp: at(0), message: { id: 'm1', content: [{ type: 'tool_use', id: 'c1', name: 'TaskCreate', input: { subject: 'Ajustar dashboard', activeForm: 'Ajustando o dashboard' } }] } });
+  s.ingest({ type: 'user', timestamp: at(1), message: { content: [{ type: 'tool_result', tool_use_id: 'c1', content: 'Task #3 created successfully' }] } });
+  s.ingest({ type: 'assistant', timestamp: at(2), message: { id: 'm2', content: [{ type: 'tool_use', id: 'u1', name: 'TaskUpdate', input: { taskId: '3', status: 'in_progress' } }] } });
+  assert.strictEqual(s.status(T0 + 2500).goal, 'Ajustando o dashboard');
+  s.ingest({ type: 'user', timestamp: at(3), message: { content: [{ type: 'tool_result', tool_use_id: 'u1' }] } });
+  s.ingest({ type: 'assistant', timestamp: at(4), message: { id: 'm3', content: [{ type: 'tool_use', id: 'u2', name: 'TaskUpdate', input: { taskId: '3', status: 'completed' } }] } });
+  assert.strictEqual(s.status(T0 + 4500).goal, undefined);
+});

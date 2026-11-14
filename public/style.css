@@ -36,7 +36,7 @@ main { display: grid; grid-template-columns: 1fr 380px; gap: 16px; padding: 16px
 
 .bubble {
   position: absolute; transform: translate(-50%, -100%); background: #fff; color: #1a1625;
-  padding: 4px 7px; font-size: 11px; line-height: 1.25; max-width: min(var(--bubble-max, 190px), 220px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  padding: 3px 6px; font-size: var(--fs, 11px); line-height: 1.25; max-width: max(var(--bubble-max, 190px), 90px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   border: 2px solid #1a1625; box-shadow: 3px 3px 0 rgba(0,0,0,.35); transition: left .1s linear, top .1s linear;
 }
 .bubble::after { content: ''; position: absolute; left: 50%; bottom: -8px; margin-left: -4px; border: 4px solid transparent; border-top-color: #1a1625; }
@@ -46,7 +46,7 @@ main { display: grid; grid-template-columns: 1fr 380px; gap: 16px; padding: 16px
 .bubble.talk { background: #fdf4ff; }
 .bubble.done { background: #bbf7d0; }
 .bubble.work { background: #fed7aa; }
-.nametag { position: absolute; transform: translateX(-50%); font-size: 9px; color: #f8fafc; background: rgba(13,11,22,.72); padding: 0 4px; white-space: nowrap; line-height: 13px; }
+.nametag { position: absolute; transform: translateX(-50%); font-size: var(--tag-fs, 9px); color: #f8fafc; background: rgba(13,11,22,.72); padding: 0 4px; white-space: nowrap; line-height: 1.4; }
 .nametag i { display: inline-block; width: 6px; height: 6px; margin-right: 3px; vertical-align: middle; }
 .card.dim { opacity: .75; }
 @keyframes bounce { to { transform: translate(-50%, calc(-100% - 4px)); } }
@@ -69,3 +69,50 @@ main { display: grid; grid-template-columns: 1fr 380px; gap: 16px; padding: 16px
 .bar span { display: block; height: 100%; }
 .legend { color: var(--muted); font-size: 10px; display: flex; gap: 10px; margin-top: 4px; }
 .legend i { display: inline-block; width: 8px; height: 8px; margin-right: 3px; vertical-align: middle; }
+
+/* ---------- balões em duas linhas ---------- */
+.bubble { white-space: normal; }
+.bubble b, .bubble span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bubble b { font-size: .92em; color: #6d28d9; }
+.bubble.waiting b { color: #713f12; }
+
+/* ---------- painel ---------- */
+.card .goal { margin-top: 8px; color: #c4b5fd; font-weight: bold; }
+.card .goal + .activity { margin-top: 2px; }
+.card .narration { color: var(--muted); font-size: 11px; margin-bottom: 4px; }
+.card .reply { margin-top: 6px; font-size: 11px; }
+.card .reply summary { cursor: pointer; color: var(--muted); }
+.card .reply p { margin: 4px 0 0; white-space: pre-wrap; background: #171427; padding: 6px; }
+
+/* ---------- controles ---------- */
+#controls { display: flex; gap: 6px; align-items: center; }
+#controls button { background: var(--panel); color: var(--text); border: 2px solid var(--line); font: inherit; padding: 3px 8px; cursor: pointer; }
+#controls button:hover { border-color: #6d5bd0; }
+#controls button.on { background: #3b3361; border-color: #a78bfa; }
+#controls button[hidden] { display: none; }
+
+/* ---------- avisos ---------- */
+#toasts { position: absolute; right: 8px; bottom: 8px; display: flex; flex-direction: column; gap: 6px; z-index: 2000; pointer-events: none; max-width: 280px; }
+.toast { background: #fff; color: #1a1625; border: 2px solid #1a1625; box-shadow: 3px 3px 0 rgba(0,0,0,.35); padding: 6px 9px; font-size: 11px; transition: opacity .5s, transform .5s; }
+.toast b { display: block; font-size: 12px; }
+.toast span { display: block; color: #475569; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.toast.done { border-left: 6px solid #22c55e; }
+.toast.waiting { border-left: 6px solid #facc15; }
+.toast.out { opacity: 0; transform: translateX(20px); }
+
+/* ---------- placar compacto ---------- */
+#ticker { display: none; position: absolute; left: 6px; top: 6px; z-index: 1500; background: rgba(13,11,22,.8); color: var(--text); font-size: 11px; padding: 3px 7px; border: 2px solid var(--line); }
+#ticker b { color: #facc15; }
+
+/* ---------- modo aquário e janela fixada ---------- */
+body.aquarium header { position: fixed; top: 6px; right: 6px; z-index: 3000; border: 0; padding: 0; opacity: .35; transition: opacity .2s; }
+body.aquarium header:hover { opacity: 1; }
+body.aquarium header h1, body.aquarium #summary { display: none; }
+body.aquarium main { display: block; padding: 0; }
+body.aquarium #panel { display: none; }
+body.aquarium #office-wrap, body.pip #office-wrap { width: min(100vw, calc(100vh * var(--ratio, 1.5))); margin: 0 auto; border: 0; }
+body.aquarium #ticker, body.pip #ticker { display: block; }
+body.aquarium, body.pip { overflow: hidden; background: #0d0b16; }
+body.pip { margin: 0; }
+body.aquarium .toast, body.pip .toast { font-size: 10px; padding: 4px 7px; }
+body.aquarium #toasts, body.pip #toasts { max-width: 230px; }

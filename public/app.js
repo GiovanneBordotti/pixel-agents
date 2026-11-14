@@ -113,11 +113,14 @@ const canvas = document.getElementById('office');
 const ctx = canvas.getContext('2d');
 const overlay = document.getElementById('overlay');
 const wrap = document.getElementById('office-wrap');
+const emptyEl = document.getElementById('empty');
 const rnd = (n) => Math.floor(Math.random() * n);
 const pick = (a) => a[rnd(a.length)];
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const rect = (x, y, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(x, y, w, h); };
 const params = new URLSearchParams(location.search);
+let pipWin = null; // janela "sempre por cima" (Document Picture-in-Picture)
+const raf = (fn) => (pipWin || window).requestAnimationFrame(fn);
 
 // ---------- mundo ----------
 let world = null;
@@ -195,7 +198,8 @@ function layout() {
       ch.x = d.seat.x; ch.y = d.seat.y; ch.inside = true;
     }
   }
-  const dpr = window.devicePixelRatio || 1;
+  wrap.style.setProperty('--ratio', String(W / H));
+  const dpr = (pipWin || window).devicePixelRatio || 1;
   S = Math.max(1, Math.ceil(((wrap.clientWidth || W) * dpr) / W));
   canvas.width = W * S;
   canvas.height = H * S;
@@ -606,9 +610,13 @@ function bubbleFor(ch, t) {
   const s = ch.data.status;
   if (WORK.has(s.state)) {
     if (!(ch.inside && atSeat(ch))) return { text: '🏃 Voltando pro trabalho!', cls: 'work' };
-    if (s.state === 'thinking') return { text: 'Pensando' + '.'.repeat(1 + (Math.floor(t / 400) % 3)), cls: s.state };
-    if (s.state === 'waiting') return { text: '❗ ' + s.text, cls: 'waiting' };
-    return { text: s.text, cls: s.state };
+    const dots = '.'.repeat(1 + (Math.floor(t / 400) % 3));
+    let action = s.text;
+    if (s.state === 'thinking') action = s.narration ? `💭 ${s.narration}` : `Pensando${dots}`;
+    if (s.state === 'waiting') action = '❗ ' + s.text;
+    // alterna entre o que está fazendo e o que está dizendo, quando há narração
+    if (s.state !== 'thinking' && s.state !== 'waiting' && s.narration && Math.floor(t / 4000 + ch.phase) % 3 === 2) action = `💬 ${s.narration}`;
+    return { text: action, goal: s.goal, cls: s.state };
   }
   if (ch.justFinished && t < ch.freeAt) return { text: '✅ Terminei! Esperando você', cls: 'done' };
   if (ch.speech && ch.speech.until > t) return { text: ch.speech.text, cls: 'talk' };
@@ -623,7 +631,7 @@ let lastT = performance.now();
 function render(t) {
   const dt = Math.min(0.1, (t - lastT) / 1000);
   lastT = t;
-  if (!world) { requestAnimationFrame(render); return; }
+  if (!world) { raf(render); return; }
   ctx.setTransform(S, 0, 0, S, 0, 0);
   ctx.imageSmoothingEnabled = false;
   drawGround(t);
@@ -653,7 +661,7 @@ function render(t) {
 
   if (isNight()) drawNight();
   placeOverlay(list, t);
-  requestAnimationFrame(render);
+  raf(render);
 }
 
 function drawNight() {
@@ -676,13 +684,18 @@ function drawNight() {
 
 function placeOverlay(list, t) {
   const k = canvas.clientWidth / W;
+  if (k !== placeOverlay.k) { placeOverlay.k = k; overlay.style.setProperty('--bubble-max', `${Math.round(DESK_W * 1.5 * k)}px`);
+    overlay.style.setProperty('--fs', `${clamp(5.4 * k, 7.5, 11).toFixed(1)}px`);
+    overlay.style.setProperty('--tag-fs', `${clamp(4.4 * k, 7, 9).toFixed(1)}px`);
+  }
   for (const ch of list) {
     const b = bubbleFor(ch, t);
     const sitDy = poseOf(ch).sit ? 2 : 0;
     if (b) {
       ch.bubble.hidden = false;
       ch.bubble.className = `bubble ${b.cls}`;
-      if (ch.bubble.textContent !== b.text) ch.bubble.textContent = b.text;
+      const html = b.goal ? `<b>🎯 ${esc(b.goal)}</b><span>${esc(b.text)}</span>` : `<span>${esc(b.text)}</span>`;
+      if (ch.bubbleHtml !== html) { ch.bubble.innerHTML = html; ch.bubbleHtml = html; }
       const half = ch.bubble.offsetWidth / 2;
       ch.bubble.style.left = `${clamp((ch.x + 6) * k, half + 2, W * k - half - 2)}px`;
       ch.bubble.style.top = `${(ch.y - 2 + sitDy) * k}px`;
@@ -709,6 +722,13 @@ function ago(ms) {
   if (s < 86400) return `${Math.round(s / 3600)}h atrás`;
   return `${Math.round(s / 86400)}d atrás`;
 }
+
+const openReplies = new Set();
+document.getElementById('panel').addEventListener('toggle', (e) => {
+  const id = e.target.dataset && e.target.dataset.id;
+  if (!id) return;
+  if (e.target.open) openReplies.add(id); else openReplies.delete(id);
+}, true);
 
 function activityText(a) {
   const ch = chars.get(a.id);
@@ -738,7 +758,7 @@ function renderPanel() {
   document.getElementById('s-working').textContent = tot.working;
   document.getElementById('s-total').textContent = fmt(tot.all);
   document.getElementById('s-output').textContent = fmt(tot.output);
-  document.getElementById('empty').hidden = agents.length > 0;
+  emptyEl.hidden = agents.length > 0;
 
   const sorted = [...agents].sort((a, b) => (WORK.has(b.status.state) - WORK.has(a.status.state)) || b.total - a.total);
   panel.innerHTML = sorted.map((a) => {
@@ -759,8 +779,11 @@ function renderPanel() {
           <span class="chip" style="background:${st.color}">${st.label}</span>
         </div>
         <div class="meta">${esc(a.branch || '—')} · ${esc((a.model || '').replace('claude-', ''))} · ${ago(a.lastEventAt)}</div>
+        ${a.status.goal ? `<div class="goal">🎯 ${esc(a.status.goal)}</div>` : ''}
         <div class="activity">${activityText(a)}</div>
+        ${a.status.narration ? `<div class="narration">💬 ${esc(a.status.narration)}</div>` : ''}
         ${a.lastPrompt ? `<div class="prompt">“${esc(a.lastPrompt)}”</div>` : ''}
+        ${a.lastReply && !WORK.has(a.status.state) ? `<details class="reply" ${openReplies.has(a.id) ? 'open' : ''} data-id="${esc(a.id)}"><summary>Última resposta</summary><p>${esc(a.lastReply)}</p></details>` : ''}
         <div class="tokens">
           <div><span class="k">input</span><span class="v">${fmt(u.input)}</span></div>
           <div><span class="k">output</span><span class="v">${fmt(u.output)}</span></div>
@@ -790,6 +813,8 @@ function update(list) {
   const needRows = Math.max(2, Math.ceil(Math.max(...[...chars.values()].filter((c) => !c.npc).map((c) => c.deskIdx + 1), 1) / 4));
   if (needRows !== world.rows || before !== chars.size) layout();
   renderPanel();
+  notifyChanges(list);
+  renderTicker(list);
 }
 
 function connect() {
@@ -804,6 +829,6 @@ window.addEventListener('resize', layout);
 layout();
 spawnNpcs();
 connect();
-requestAnimationFrame(render);
+raf(render);
 // mantém o texto do painel ("conversando com…") atualizado entre eventos do servidor
 setInterval(renderPanel, 1500);

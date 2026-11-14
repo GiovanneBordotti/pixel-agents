@@ -2,6 +2,7 @@
 'use strict';
 
 const http = require('http');
+const { spawn } = require('child_process');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -35,7 +36,10 @@ watcher.start(broadcast);
 setInterval(broadcast, 2000);
 
 const PUBLIC = path.join(__dirname, 'public');
-const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml' };
+const TYPES = {
+  '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml',
+  '.png': 'image/png', '.json': 'application/json', '.webmanifest': 'application/manifest+json',
+};
 
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, 'http://x');
@@ -65,4 +69,19 @@ server.listen(PORT, HOST, () => {
   console.log(`\n  👾 Pixel Agents rodando em http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}`);
   console.log(`  📂 Lendo sessões de: ${projectsDir}${flag('demo') ? ' (modo demo)' : ''}`);
   console.log(`  ⏱  Mostrando até ${MAX_AGENTS} agentes com atividade nas últimas ${ACTIVE_HOURS}h\n`);
+  if (flag('open')) openBrowser(`http://localhost:${PORT}`);
 });
+
+server.on('error', (e) => {
+  if (e.code === 'EADDRINUSE') {
+    console.log(`  A porta ${PORT} já está em uso (o Pixel Agents já está rodando?).`);
+    if (flag('open')) openBrowser(`http://localhost:${PORT}`);
+    setTimeout(() => process.exit(0), 1500);
+  } else throw e;
+});
+
+function openBrowser(url) {
+  const cmd = process.platform === 'win32' ? ['cmd', ['/c', 'start', '', url]]
+    : process.platform === 'darwin' ? ['open', [url]] : ['xdg-open', [url]];
+  try { spawn(cmd[0], cmd[1], { stdio: 'ignore', detached: true }).unref(); } catch { /* sem navegador */ }
+}

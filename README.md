@@ -2,6 +2,12 @@
 
 Uma cidadezinha em pixel art onde **cada terminal do Claude Code vira um morador**. Quando está trabalhando, ele fica na mesa do escritório (Claude HQ) e mostra num balão o que está fazendo (lendo um arquivo, rodando um comando, delegando para um subagente, esperando você…). Quando termina ou o terminal é fechado, ele sai para a cidade: conversa com os outros, toma café, senta no banco da praça ou dá uma pausa no fumódromo. O painel lateral mostra **quantos tokens cada um está gastando**.
 
+## Destaques
+
+- **Balões que explicam o trabalho**: mostram a tarefa em andamento (🎯, vinda da lista de tarefas do Claude), o que ele está fazendo agora e o que ele acabou de dizer (💬).
+- **Avisos**: um "plim" e um aviso na tela (e, se você ligar 🔔, uma notificação do sistema) quando um agente **termina** ou **precisa de você**. O título da janela mostra quantos estão esperando.
+- **App instalável e modo aquário**: instale como app e deixe a cidade num cantinho da tela, ou fixe por cima das outras janelas (📌).
+
 ## A cidade
 
 - **Claude HQ**: o escritório. Cada agente tem a sua mesa.
@@ -50,7 +56,28 @@ npm start          # lê ~/.claude/projects
 npm run demo       # agentes falsos, para ver funcionando
 ```
 
-Abra <http://localhost:4567>.
+Abra <http://localhost:4567>, ou use `npm run app`, que já abre o navegador.
+
+### Botões
+
+| Botão | O que faz |
+|-------|-----------|
+| ⬇️ Instalar app | Instala como app (Chrome/Edge). Também dá pelo ícone de instalar na barra de endereço. |
+| 🔔 / 🔕 | Notificações do sistema quando um agente termina ou precisa de você |
+| 🔊 / 🔇 | Som dos avisos |
+| 🐠 | Modo aquário: só a cidade, sem painel, para deixar numa janela pequena |
+| 📌 | Fixa a cidade numa janelinha **sempre por cima** das outras (Chrome/Edge 116+) |
+
+### Como app (o "aquário")
+
+1. Rode `npm start` e abra <http://localhost:4567> no Chrome ou no Edge.
+2. Clique em **⬇️ Instalar app** (ou no ícone de instalar na barra de endereço).
+3. O Pixel Agents vira um app com ícone próprio, abrindo em janela própria. Clique com o botão direito no ícone e escolha **Modo aquário** para abrir direto só com a cidade.
+4. Para ela ficar sempre visível, clique em 📌.
+
+O app depende do servidor (`npm start`) rodando. Para ele subir junto com o Windows, crie um atalho para `npm start` (com a pasta do projeto como "Iniciar em") e coloque em `shell:startup` (Win+R → `shell:startup`).
+
+![modo aquário](docs/aquario.png)
 
 ### Opções
 
@@ -61,6 +88,7 @@ Abra <http://localhost:4567>.
 | `--hours 168`     | `PIXEL_AGENTS_HOURS`  | `168` (sessões com atividade nos últimos 7 dias) |
 | `--max 12`        | `PIXEL_AGENTS_MAX`    | `12` (máximo de personagens, os mais recentes)   |
 | `--claude-dir`    | `CLAUDE_CONFIG_DIR`   | `~/.claude`     |
+| `--open`          |                       | abre o navegador ao iniciar |
 | `--demo`          |                       | desligado       |
 
 > Use `--host 0.0.0.0` se quiser abrir pelo celular na mesma rede. Atenção: isso expõe os prompts das suas sessões para a rede local.
