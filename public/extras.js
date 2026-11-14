@@ -41,6 +41,7 @@ window.addEventListener('pointerdown', () => { if (prefs.sound && !audio) tone([
 
 // ---------- avisos ----------
 const prevState = new Map();
+const prevJob = new Map();
 const lastAlert = new Map();
 let firstSnapshot = true;
 
@@ -50,8 +51,18 @@ function notifyChanges(list) {
     const cur = a.status.state;
     prevState.set(a.id, cur);
     if (firstSnapshot || prev === undefined || prev === cur) continue;
+    const viaApp = a.job && (a.job.state === 'running' || a.job.state === 'summarizing');
     if (cur === 'waiting') alertUser('waiting', `❗ ${a.name} precisa de você`, a.status.text, a.id);
-    else if (cur === 'idle' && WORK.has(prev)) alertUser('done', `✅ ${a.name} terminou`, a.lastReply || 'Esperando sua próxima mensagem', a.id);
+    else if (cur === 'idle' && WORK.has(prev) && !viaApp) alertUser('done', `✅ ${a.name} terminou`, a.lastReply || 'Esperando sua próxima mensagem', a.id);
+  }
+  // prompts enviados pela app: avisa quando o resumo fica pronto
+  for (const a of list) {
+    const js = a.job ? a.job.state : null;
+    const prev = prevJob.get(a.id);
+    prevJob.set(a.id, js);
+    if (firstSnapshot || prev === js || !prev) continue;
+    if (js === 'done') alertUser('done', `💬 ${a.name} respondeu`, a.job.summary || 'Clique para ver a resposta', a.id);
+    if (js === 'error') alertUser('waiting', `⚠️ ${a.name}: deu erro`, a.job.error, a.id);
   }
   firstSnapshot = false;
   const waiting = list.filter((a) => a.status.state === 'waiting').length;
@@ -66,7 +77,7 @@ function alertUser(kind, title, body, id) {
   if (now - (lastAlert.get(key) || 0) < 15000) return; // evita repetir o mesmo aviso
   lastAlert.set(key, now);
   SOUNDS[kind]();
-  toast(kind, title, body);
+  toast(kind, title, body, id);
   const away = document.hidden || !document.hasFocus();
   if (prefs.notify && 'Notification' in window && Notification.permission === 'granted' && away && !pipWin) {
     try {
@@ -76,7 +87,7 @@ function alertUser(kind, title, body, id) {
   }
 }
 
-function toast(kind, title, body) {
+function toast(kind, title, body, id) {
   let box = wrap.querySelector('#toasts');
   if (!box) {
     box = document.createElement('div');
@@ -85,6 +96,7 @@ function toast(kind, title, body) {
   }
   const el = document.createElement('div');
   el.className = `toast ${kind}`;
+  if (id) { el.dataset.id = id; el.title = 'Clique para ver a resposta completa'; }
   el.innerHTML = `<b>${esc(title)}</b><span>${esc(String(body).slice(0, 120))}</span>`;
   box.prepend(el);
   while (box.children.length > 3) box.lastChild.remove();

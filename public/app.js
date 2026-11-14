@@ -119,7 +119,8 @@ const pick = (a) => a[rnd(a.length)];
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const rect = (x, y, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(x, y, w, h); };
 const params = new URLSearchParams(location.search);
-let pipWin = null; // janela "sempre por cima" (Document Picture-in-Picture)
+let pipWin = null;
+let promptsEnabled = true; // o servidor pode desligar o envio de prompts
 const raf = (fn) => (pipWin || window).requestAnimationFrame(fn);
 
 // ---------- mundo ----------
@@ -723,13 +724,6 @@ function ago(ms) {
   return `${Math.round(s / 86400)}d atrás`;
 }
 
-const openReplies = new Set();
-document.getElementById('panel').addEventListener('toggle', (e) => {
-  const id = e.target.dataset && e.target.dataset.id;
-  if (!id) return;
-  if (e.target.open) openReplies.add(id); else openReplies.delete(id);
-}, true);
-
 function activityText(a) {
   const ch = chars.get(a.id);
   if (WORK.has(a.status.state) || !ch) return a.status.text;
@@ -783,7 +777,11 @@ function renderPanel() {
         <div class="activity">${activityText(a)}</div>
         ${a.status.narration ? `<div class="narration">💬 ${esc(a.status.narration)}</div>` : ''}
         ${a.lastPrompt ? `<div class="prompt">“${esc(a.lastPrompt)}”</div>` : ''}
-        ${a.lastReply && !WORK.has(a.status.state) ? `<details class="reply" ${openReplies.has(a.id) ? 'open' : ''} data-id="${esc(a.id)}"><summary>Última resposta</summary><p>${esc(a.lastReply)}</p></details>` : ''}
+        ${jobHtml(a)}
+        <div class="actions">
+          <button data-act="chat" data-id="${esc(a.id)}">💬 Conversar</button>
+          ${a.lastReply ? `<button data-act="reply" data-id="${esc(a.id)}" class="ghost">📄 Resposta completa</button>` : ''}
+        </div>
         <div class="tokens">
           <div><span class="k">input</span><span class="v">${fmt(u.input)}</span></div>
           <div><span class="k">output</span><span class="v">${fmt(u.output)}</span></div>
@@ -822,13 +820,18 @@ function connect() {
   const es = new EventSource('events');
   es.onopen = () => { conn.textContent = 'ao vivo'; conn.className = 'conn on'; };
   es.onerror = () => { conn.textContent = 'offline'; conn.className = 'conn off'; };
-  es.onmessage = (e) => update(JSON.parse(e.data).agents);
+  es.onmessage = (e) => {
+    const data = JSON.parse(e.data);
+    promptsEnabled = data.prompts !== false;
+    update(data.agents);
+  };
 }
 
 window.addEventListener('resize', layout);
 layout();
 spawnNpcs();
-connect();
+// conecta só depois que extras.js e chat.js carregarem
+window.addEventListener('load', connect);
 raf(render);
 // mantém o texto do painel ("conversando com…") atualizado entre eventos do servidor
 setInterval(renderPanel, 1500);

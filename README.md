@@ -6,6 +6,7 @@ Uma cidadezinha em pixel art onde **cada terminal do Claude Code vira um morador
 
 - **Balões que explicam o trabalho**: mostram a tarefa em andamento (🎯, vinda da lista de tarefas do Claude), o que ele está fazendo agora e o que ele acabou de dizer (💬).
 - **Avisos**: um "plim" e um aviso na tela (e, se você ligar 🔔, uma notificação do sistema) quando um agente **termina** ou **precisa de você**. O título da janela mostra quantos estão esperando.
+- **Conversar pela app**: clique num personagem (ou em 💬 Conversar no card) e mande um prompt. A app continua aquela sessão do Claude Code, mostra um **resumo curto** quando ele termina e abre a **resposta completa formatada** num modal.
 - **App instalável e modo aquário**: instale como app e deixe a cidade num cantinho da tela, ou fixe por cima das outras janelas (📌).
 
 ## A cidade
@@ -68,6 +69,24 @@ Abra <http://localhost:4567>, ou use `npm run app`, que já abre o navegador.
 | 🐠 | Modo aquário: só a cidade, sem painel, para deixar numa janela pequena |
 | 📌 | Fixa a cidade numa janelinha **sempre por cima** das outras (Chrome/Edge 116+) |
 
+### Conversar com um agente
+
+1. Clique no personagem na cidade ou no botão **💬 Conversar** do card.
+2. Escreva o prompt e escolha as permissões:
+   - **Pode editar arquivos** (padrão): edita arquivos, mas comandos no terminal são negados.
+   - **Só ler e responder** ou **Só planejar**: não mexe em nada.
+   - **Liberado geral**: edita e roda comandos sem perguntar. Use com cuidado.
+3. Enquanto ele trabalha, o personagem vai para a mesa e o card mostra ⏳. Quando termina, chega um aviso com o resumo. Clique no aviso ou em **📄 Resposta completa** para ler tudo formatado.
+
+Por baixo, a app roda `claude -p --resume <sessão> --output-format stream-json` na pasta do projeto, mandando o seu texto pela entrada padrão. O resumo é feito pelo **Haiku** (gasta poucos tokens, numa sessão separada que não aparece na cidade). Para desligar, use `--no-summary`, e o resumo passa a ser só as primeiras frases da resposta.
+
+> Não mande prompt pela app para uma sessão que está aberta num terminal ao mesmo tempo: os dois podem se atropelar.
+> O envio só funciona com o servidor em `localhost` e só aceita pedidos da própria página (outros sites não conseguem mandar comandos). Para desligar de vez: `--no-prompts`.
+
+Se o comando `claude` não estiver no PATH, aponte com `CLAUDE_BIN=/caminho/do/claude`.
+
+![resposta completa](docs/resposta.png)
+
 ### Como app (o "aquário")
 
 1. Rode `npm start` e abra <http://localhost:4567> no Chrome ou no Edge.
@@ -89,6 +108,9 @@ O app depende do servidor (`npm start`) rodando. Para ele subir junto com o Wind
 | `--max 12`        | `PIXEL_AGENTS_MAX`    | `12` (máximo de personagens, os mais recentes)   |
 | `--claude-dir`    | `CLAUDE_CONFIG_DIR`   | `~/.claude`     |
 | `--open`          |                       | abre o navegador ao iniciar |
+| `--no-summary`    |                       | não usa o Haiku para resumir respostas |
+| `--no-prompts`    |                       | desliga o envio de prompts pela app |
+|                   | `CLAUDE_BIN`          | caminho do executável do `claude` |
 | `--demo`          |                       | desligado       |
 
 > Use `--host 0.0.0.0` se quiser abrir pelo celular na mesma rede. Atenção: isso expõe os prompts das suas sessões para a rede local.
@@ -99,7 +121,9 @@ O app depende do servidor (`npm start`) rodando. Para ele subir junto com o Wind
 server.js          servidor HTTP + SSE
 lib/session.js     estado de uma sessão (atividade + tokens)
 lib/watcher.js     leitura incremental dos .jsonl
+lib/jobs.js        envio de prompts (claude -p --resume) e resumos
 lib/demo.js        gerador de sessões falsas
+lib/fake-claude.js "claude" de mentira usado no demo e nos testes
 public/            front-end (cidade em canvas + painel)
 test/              testes (node --test)
 ```
